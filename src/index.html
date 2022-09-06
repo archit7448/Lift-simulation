@@ -8,22 +8,20 @@
     <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body>
+    <header>
+      <label>
+        Rows
+        <input id="row-input" type="number" />
+      </label>
+      <label>
+        Columns
+        <input id="column-input" type="number" />
+      </label>
+      <button id="generate-button">Generate</button>
+    </header>
     <main>
-      <div>
-        <label>
-          Rows
-          <input id="row-input" type="number" />
-        </label>
-        <label>
-          column
-          <input id="column-input" type="number" />
-        </label>
-        <button id="generate-button">Generate</button>
-      </div>
       <div id="lift-button-wrapper"></div>
-      <div class="flex" id="lift-wrapper">
-        
-      </div>
+      <div class="flex" id="lift-wrapper"></div>
     </main>
   </body>
   <script src="./js/main.js"></script>
