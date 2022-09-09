@@ -4,9 +4,14 @@ const rowInput = document.querySelector("#row-input");
 const liftButtonWrapper = document.querySelector("#lift-button-wrapper");
 const liftWrapper = document.querySelector("#lift-wrapper");
 
-let stateGlobal = [];
-
 const createLiftSimulation = () => {
+  while (liftButtonWrapper.lastElementChild) {
+    liftButtonWrapper.removeChild(liftButtonWrapper.lastElementChild);
+  }
+  while (liftWrapper.lastElementChild) {
+    liftWrapper.removeChild(liftWrapper.lastElementChild);
+  }
+  stateGlobal = [];
   for (let i = 0; i < rowInput.value; i++) {
     let elementDiv = document.createElement("div");
     // Button One or Button Up
@@ -43,8 +48,64 @@ const createLiftSimulation = () => {
     liftWrapper.append(elementDivColumn);
     stateGlobal = [
       ...stateGlobal,
-      { stateLift: "idle", floor: 0, direction: "up" },
+      { stateLift: "idle", floor: 0, direction: "up", time: 0 },
     ];
+  }
+};
+
+const stateHandler = (floor, direction) => {
+  const stateGlobalCopy = [...stateGlobal];
+
+  const stateValue = document.querySelector("#state-value");
+
+  let index = stateGlobal.findIndex((value) => {
+    if (value.floor === floor) {
+      return true;
+    } else if (!stateGlobal.some((value) => value.floor === floor)) {
+      return value.stateLift === "idle";
+    }
+  });
+  let time = Number(stateGlobalCopy[index]?.floor) - floor;
+
+  stateGlobal = stateGlobal.map((value, i) => {
+    return i === index
+      ? {
+          stateLift: "moving",
+          floor: floor,
+          direction: direction,
+          time: Math.abs(time) * 2,
+        }
+      : value;
+  });
+
+  stateValue.innerHTML = JSON.stringify(stateGlobal);
+  setTimeout(
+    () => {
+      stateGlobal = stateGlobal.map((value, i) =>
+        index === i ? { ...value, stateLift: "idle" } : value
+      );
+      stateValue.innerHTML = JSON.stringify(stateGlobal);
+    },
+    stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
+      ? (stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor) * 2000 +
+          5000
+      : (stateGlobalCopy[index]?.floor - stateGlobal[index]?.floor) * 2000 +
+          5000
+  );
+  if (index !== -1) {
+    const stateButton = document.querySelector(`#state-lift-${index}`);
+    stateButton.style.transform =
+      direction === "up"
+        ? `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`
+        : `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`;
+    stateButton.style.transition =
+      stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
+        ? `linear ${
+            (stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor) * 2
+          }s`
+        : `linear ${
+            (stateGlobalCopy[index]?.floor - stateGlobal[index]?.floor) * 2
+          }s`;
   }
 };
 
@@ -63,48 +124,3 @@ const addButtonDownFunc = (value) => {
 };
 
 generateButton.addEventListener("click", createLiftSimulation);
-
-const stateHandler = (floor, direction) => {
-  const stateGlobalCopy = [...stateGlobal];
-  let index = stateGlobal.findIndex((value) => {
-    if (direction === "down") {
-      return value.floor > floor && value.stateLift === "idle";
-    } else if (direction === "up") {
-      return value.floor < floor && value.stateLift === "idle";
-    }
-  });
-  stateGlobal = stateGlobal.map((value, i) => {
-    if (direction === "down") {
-      return index === i && value.floor > floor
-        ? { stateLift: "pending", floor: floor, direction: direction }
-        : value;
-    } else if (direction === "up") {
-      return index === i && value.floor < floor
-        ? { stateLift: "pending", floor: floor, direction: direction }
-        : value;
-    } else {
-      return index === i
-        ? { stateLift: "pending", floor: floor, direction: direction }
-        : value;
-    }
-  });
-  setTimeout(
-    () => {
-      stateGlobal = stateGlobal.map((value, i) =>
-        index === i ? { ...value, stateLift: "idle" } : value
-      );
-    },
-    stateGlobal[index].floor > stateGlobalCopy[index].floor
-      ? (stateGlobal[index].floor - stateGlobalCopy[index].floor) * 500 + 5000
-      : (stateGlobalCopy[index].floor - stateGlobal[index].floor) * 500 + 5000
-  );
-  const stateButton = document.querySelector(`#state-lift-${index}`);
-  stateButton.style.transform =
-    direction === "up"
-      ? `translateY(-${Number(stateGlobal[index].floor) * 114}px)`
-      : `translateY(-${Number(stateGlobal[index].floor) * 114}px)`;
-  stateButton.style.transition =
-    stateGlobal[index].floor > stateGlobalCopy[index].floor
-      ? `${(stateGlobal[index].floor - stateGlobalCopy[index].floor) * 0.5}s`
-      : `${(stateGlobalCopy[index].floor - stateGlobal[index].floor) * 0.5}s`;
-};
