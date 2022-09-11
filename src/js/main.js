@@ -4,6 +4,8 @@ const rowInput = document.querySelector("#row-input");
 const liftButtonWrapper = document.querySelector("#lift-button-wrapper");
 const liftWrapper = document.querySelector("#lift-wrapper");
 
+let stateGlobal = [];
+
 const createLiftSimulation = () => {
   while (liftButtonWrapper.lastElementChild) {
     liftButtonWrapper.removeChild(liftButtonWrapper.lastElementChild);
@@ -15,6 +17,7 @@ const createLiftSimulation = () => {
   for (let i = 0; i < rowInput.value; i++) {
     let elementDiv = document.createElement("div");
     // Button One or Button Up
+
     let buttonOne = document.createElement("button");
     buttonOne.innerHTML = "UP";
     buttonOne.value = i;
@@ -45,66 +48,133 @@ const createLiftSimulation = () => {
     let elementDivColumn = document.createElement("div");
     elementDivColumn.className = "lift";
     elementDivColumn.id = `state-lift-${i}`;
+    let leftDiv = document.createElement("div");
+    leftDiv.className = `lift-door lift-left-${i}`;
+    let righDiv = document.createElement("div");
+    righDiv.className = `lift-door lift-right-${i}`;
+    let doorWrapper = document.createElement("div");
+    doorWrapper.className = `lift-door-wrapper`;
+    doorWrapper.prepend(leftDiv);
+    doorWrapper.append(righDiv);
+    elementDivColumn.append(doorWrapper);
     liftWrapper.append(elementDivColumn);
     stateGlobal = [
       ...stateGlobal,
-      { stateLift: "idle", floor: 0, direction: "up", time: 0 },
+      {
+        stateLift: "idle",
+        floor: 0,
+        direction: "up",
+        atFloor: 0,
+        queue: [],
+      },
     ];
   }
+};
+
+const timerFunc = (index, difference) => {
+  const myNewTimeout = setInterval(() => {
+    if (stateGlobal[index].atFloor != stateGlobal[index].floor) {
+      stateGlobal = stateGlobal.map((value, i) => {
+        return i === index
+          ? {
+              ...value,
+              atFloor:
+                difference > 0
+                  ? Number(value.atFloor) + 1
+                  : Number(value.atFloor) - 1,
+            }
+          : value;
+      });
+    } else {
+      const stateDoorLeft = document.querySelector(`.lift-left-${index}`);
+      const stateDoorRight = document.querySelector(`.lift-right-${index}`);
+      stateDoorLeft.style.transform = `translateX(-100%)`;
+      stateDoorLeft.style.transition = `linear 2.5s`;
+      stateDoorRight.style.transform = `translateX(100%)`;
+      stateDoorRight.style.transition = `linear 2.5s`;
+      stateGlobal = stateGlobal.map((value, i) => {
+        return i === index
+          ? {
+              ...value,
+              stateLift: "stop",
+            }
+          : value;
+      });
+      setTimeout(() => {
+        stateDoorLeft.style.transform = `translateX(0)`;
+        stateDoorLeft.style.transition = `linear 2.5s`;
+        stateDoorRight.style.transform = `translateX(0)`;
+        stateDoorRight.style.transition = `linear 2.5s`;
+        setTimeout(() => {
+          stateGlobal = stateGlobal.map((value, i) => {
+            return i === index
+              ? {
+                  ...value,
+                  stateLift: "idle",
+                }
+              : value;
+          });
+        }, 2500);
+      }, 2500);
+      clearInterval(myNewTimeout);
+    }
+  }, 2000);
 };
 
 const stateHandler = (floor, direction) => {
   const stateGlobalCopy = [...stateGlobal];
 
-  const stateValue = document.querySelector("#state-value");
-
   let index = stateGlobal.findIndex((value) => {
-    if (value.floor === floor) {
+    if (value.floor == floor) {
       return true;
     } else if (!stateGlobal.some((value) => value.floor === floor)) {
       return value.stateLift === "idle";
     }
   });
-  let time = Number(stateGlobalCopy[index]?.floor) - floor;
 
   stateGlobal = stateGlobal.map((value, i) => {
     return i === index
       ? {
           stateLift: "moving",
           floor: floor,
+          allowState: true,
           direction: direction,
-          time: Math.abs(time) * 2,
+          atFloor: value.atFloor,
+          timerId: null,
         }
       : value;
   });
 
-  stateValue.innerHTML = JSON.stringify(stateGlobal);
-  setTimeout(
-    () => {
-      stateGlobal = stateGlobal.map((value, i) =>
-        index === i ? { ...value, stateLift: "idle" } : value
-      );
-      stateValue.innerHTML = JSON.stringify(stateGlobal);
-    },
-    stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
-      ? (stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor) * 2000 +
-          5000
-      : (stateGlobalCopy[index]?.floor - stateGlobal[index]?.floor) * 2000 +
-          5000
-  );
+  const difference = stateGlobal[index].floor - stateGlobalCopy[index].floor;
+
+  timerFunc(index, difference);
+
   if (index !== -1) {
     const stateButton = document.querySelector(`#state-lift-${index}`);
+    console.log(
+      stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
+        ? `linear ${
+            (Number(stateGlobal[index]?.floor) -
+              Number(stateGlobal[index]?.atFloor)) *
+            2
+          }s`
+        : `linear ${
+            Number(stateGlobal[index]?.floor - stateGlobal[index]?.floor) * 2
+          }s`
+    );
     stateButton.style.transform =
       direction === "up"
         ? `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`
         : `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`;
     stateButton.style.transition =
-      stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
+      stateGlobal[index]?.floor > stateGlobal[index]?.atFloor
         ? `linear ${
-            (stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor) * 2
+            (Number(stateGlobal[index]?.floor) -
+              Number(stateGlobal[index]?.atFloor)) *
+            2
           }s`
         : `linear ${
-            (stateGlobalCopy[index]?.floor - stateGlobal[index]?.floor) * 2
+            Number(stateGlobal[index]?.atFloor - stateGlobal[index]?.floor) * 2
           }s`;
   }
 };
@@ -112,14 +182,14 @@ const stateHandler = (floor, direction) => {
 const addButtonUpFunc = (value) => {
   const buttonUp = document.querySelector(value);
   buttonUp.addEventListener("click", (event) => {
-    stateHandler(event.target.value, "up");
+    stateHandler(event.target.value, "up", "explicit");
   });
 };
 
 const addButtonDownFunc = (value) => {
   const buttonDown = document.querySelector(value);
   buttonDown.addEventListener("click", (event) => {
-    stateHandler(event.target.value, "down");
+    stateHandler(event.target.value, "down", "explicit");
   });
 };
 

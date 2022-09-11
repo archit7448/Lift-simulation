@@ -19,9 +19,6 @@ main > div {
   display: flex;
   flex-direction: column;
 }
-main > div div {
-  margin: 2rem;
-}
 .flex-row {
   display: flex;
 }
@@ -33,12 +30,32 @@ button {
   font-weight: 500;
   background-color: black;
 }
-
+#lift-button-wrapper > div{
+  margin: 2rem;
+}
+#lift-button-wrapper > div > {
+  margin: 2rem;
+}
 .lift {
-  width: 50px;
-  height: 50px;
+  width: 100px;
+  height: 100px;
   background-color: red;
   transition: 1s smooth;
+  margin: 1rem;
+  overflow: hidden;
+}
+.lift-door-wrapper {
+  width: 100%;
+  height: 100%;
+}
+.lift-door {
+  background: orange;
+  width: 50%;
+  height: 100%;
+  float: left;
+  position: relative;
+  z-index: 2;
+  transform: translateX(0);
 }
 #state-one {
   grid-row: 3;
@@ -56,12 +73,12 @@ button {
   display: flex;
   flex-direction: row;
 }
-#lift-button-wrapper div{
-   display: flex;
-   flex-direction: column;
-   width: 100px;
-   height: 50px;
+#lift-button-wrapper div {
+  display: flex;
+  flex-direction: column;
+  width: 100px;
+  height: 50px;
 }
-#lift-button-wrapper div button{
+#lift-button-wrapper div button {
   margin: 2px 0;
 }
