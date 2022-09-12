@@ -6,7 +6,7 @@ const liftWrapper = document.querySelector("#lift-wrapper");
 
 let stateGlobal = [];
 
-let destination = [];
+let floorCalled = [];
 
 const createLiftSimulation = () => {
   while (liftButtonWrapper.lastElementChild) {
@@ -29,7 +29,7 @@ const createLiftSimulation = () => {
     buttonTwo.innerHTML = "DOWN";
     buttonTwo.value = i;
     buttonTwo.id = `button-down-${i}`;
-
+    let hr = document.createElement("hr");
     if (i === 0) {
       liftButtonWrapper.prepend(elementDiv);
       elementDiv.prepend(buttonTwo);
@@ -73,7 +73,7 @@ const createLiftSimulation = () => {
 
 const timerFunc = (index, difference) => {
   const myNewTimeout = setInterval(() => {
-    if (stateGlobal[index]?.atFloor != stateGlobal[index]?.floor) {
+    if (stateGlobal[index].atFloor != stateGlobal[index].floor) {
       stateGlobal = stateGlobal.map((value, i) => {
         return i === index
           ? {
@@ -114,8 +114,8 @@ const timerFunc = (index, difference) => {
                 }
               : value;
           });
-          if (destination.length >= 1) {
-            stateHandler(destination.shift());
+          if (floorCalled.length >= 1) {
+            stateHandler(floorCalled.shift());
           }
         }, 2500);
       }, 2500);
@@ -144,40 +144,28 @@ const stateHandler = (floor) => {
         }
       : value;
   });
-
   const difference = stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor;
 
-  if (stateGlobal[index]?.floor !== stateGlobalCopy[index]?.floor) {
-    if (index !== -1) {
-      timerFunc(index, difference);
-      console.log(stateGlobal);
-    }
-  }
-  if (stateGlobal[index]?.atFloor == stateGlobal[index]?.floor) {
-    if (index !== -1) {
-      timerFunc(index, difference);
-    }
-    console.log("hello");
-  }
   if (index == -1) {
-    destination.push(floor);
+    if (floorCalled.indexOf(floor) === -1) {
+      floorCalled.push(floor);
+    }
+  } else if (
+    stateGlobalCopy[index]?.floor != stateGlobal[index]?.floor &&
+    index !== -1
+  ) {
+    timerFunc(index, difference);
+  } else if (
+    stateGlobal[index]?.floor == stateGlobal[index]?.atFloor &&
+    index !== -1
+  ) {
+    timerFunc(index, difference);
   }
 
   if (index !== -1) {
     const stateButton = document.querySelector(`#state-lift-${index}`);
-    console.log(
-      stateGlobal[index]?.floor > stateGlobalCopy[index]?.floor
-        ? `linear ${
-            (Number(stateGlobal[index]?.floor) -
-              Number(stateGlobal[index]?.atFloor)) *
-            2
-          }s`
-        : `linear ${
-            Number(stateGlobal[index]?.floor - stateGlobal[index]?.floor) * 2
-          }s`
-    );
     stateButton.style.transform = `translateY(-${
-      Number(stateGlobal[index]?.floor) * 114
+      Number(stateGlobal[index]?.floor) * 146
     }px)`;
     stateButton.style.transition =
       stateGlobal[index]?.floor > stateGlobal[index]?.atFloor
@@ -195,14 +183,14 @@ const stateHandler = (floor) => {
 const addButtonUpFunc = (value) => {
   const buttonUp = document.querySelector(value);
   buttonUp.addEventListener("click", (event) => {
-    stateHandler(event.target.value, "up", "explicit");
+    stateHandler(event.target.value);
   });
 };
 
 const addButtonDownFunc = (value) => {
   const buttonDown = document.querySelector(value);
   buttonDown.addEventListener("click", (event) => {
-    stateHandler(event.target.value, "down", "explicit");
+    stateHandler(event.target.value);
   });
 };
 
