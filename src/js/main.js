@@ -6,6 +6,8 @@ const liftWrapper = document.querySelector("#lift-wrapper");
 
 let stateGlobal = [];
 
+let destination = [];
+
 const createLiftSimulation = () => {
   while (liftButtonWrapper.lastElementChild) {
     liftButtonWrapper.removeChild(liftButtonWrapper.lastElementChild);
@@ -63,9 +65,7 @@ const createLiftSimulation = () => {
       {
         stateLift: "idle",
         floor: 0,
-        direction: "up",
         atFloor: 0,
-        queue: [],
       },
     ];
   }
@@ -73,7 +73,7 @@ const createLiftSimulation = () => {
 
 const timerFunc = (index, difference) => {
   const myNewTimeout = setInterval(() => {
-    if (stateGlobal[index].atFloor != stateGlobal[index].floor) {
+    if (stateGlobal[index]?.atFloor != stateGlobal[index]?.floor) {
       stateGlobal = stateGlobal.map((value, i) => {
         return i === index
           ? {
@@ -114,6 +114,9 @@ const timerFunc = (index, difference) => {
                 }
               : value;
           });
+          if (destination.length >= 1) {
+            stateHandler(destination.shift());
+          }
         }, 2500);
       }, 2500);
       clearInterval(myNewTimeout);
@@ -121,7 +124,7 @@ const timerFunc = (index, difference) => {
   }, 2000);
 };
 
-const stateHandler = (floor, direction) => {
+const stateHandler = (floor) => {
   const stateGlobalCopy = [...stateGlobal];
 
   let index = stateGlobal.findIndex((value) => {
@@ -137,17 +140,28 @@ const stateHandler = (floor, direction) => {
       ? {
           stateLift: "moving",
           floor: floor,
-          allowState: true,
-          direction: direction,
           atFloor: value.atFloor,
-          timerId: null,
         }
       : value;
   });
 
-  const difference = stateGlobal[index].floor - stateGlobalCopy[index].floor;
+  const difference = stateGlobal[index]?.floor - stateGlobalCopy[index]?.floor;
 
-  timerFunc(index, difference);
+  if (stateGlobal[index]?.floor !== stateGlobalCopy[index]?.floor) {
+    if (index !== -1) {
+      timerFunc(index, difference);
+      console.log(stateGlobal);
+    }
+  }
+  if (stateGlobal[index]?.atFloor == stateGlobal[index]?.floor) {
+    if (index !== -1) {
+      timerFunc(index, difference);
+    }
+    console.log("hello");
+  }
+  if (index == -1) {
+    destination.push(floor);
+  }
 
   if (index !== -1) {
     const stateButton = document.querySelector(`#state-lift-${index}`);
@@ -162,10 +176,9 @@ const stateHandler = (floor, direction) => {
             Number(stateGlobal[index]?.floor - stateGlobal[index]?.floor) * 2
           }s`
     );
-    stateButton.style.transform =
-      direction === "up"
-        ? `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`
-        : `translateY(-${Number(stateGlobal[index]?.floor) * 114}px)`;
+    stateButton.style.transform = `translateY(-${
+      Number(stateGlobal[index]?.floor) * 114
+    }px)`;
     stateButton.style.transition =
       stateGlobal[index]?.floor > stateGlobal[index]?.atFloor
         ? `linear ${
